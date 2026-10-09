@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "completed": 15,
+  "not_evaluable": [],
+  "published_events": 17933,
+  "temporal_boundaries": "PASS",
+  "non_overlapping_episodes": "PASS",
+  "accounting": "PASS",
+  "integration": "DISABLED",
+  "python_integrity_tests": 11,
+  "native_parity_and_future_gap_check": "PASS",
+  "ui_logic_selections": 140,
+  "ui_exports": 2,
+  "browser_visual_qa": "NOT_EXECUTED",
+  "mobile_pwa_installation": "NOT_EXECUTED",
+  "apk_build": "NOT_APPLICABLE_NEW_WEB_APP"
+}

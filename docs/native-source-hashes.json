@@ -1,0 +1,15 @@
+{
+  "repository": "Domingales/Cripto-Analisis-Multi---MOTOR-PREDICTIVO",
+  "commit": "6cd24603a15b49234a6de7c6c34efc680d25e0d7",
+  "adapter": "ExpandedResearchEngine: cache optimization and previously audited future-availability cooldown repair",
+  "files": {
+    "BacktestEngine.kt": "4b5085d77e53673cddd540415a8977a10e976ba107d4a260c0a2330c41be8d49",
+    "ExpandedResearchEngine.kt": "9c91a8d720ba9f92b025a4f5774c1d4ff4fda829f2ce67b845aef45d2a2bf79b",
+    "Models.kt": "6533f145589fce4fd365da882a1486fd28535858e8f0dd0235ddc452fc04bc78",
+    "NativeAudit.kt": "9351b29a729a7085926615e2cca89b0be91f51a8e37693a1d63c195eb54d9bf6",
+    "NativeRunner.kt": "641cd39f814be6268af6bdf3086d1778f45e8a4fcc4c1e0c4dedca804a702b58",
+    "OutcomeTracker.kt": "32ccad66fe532501fb51e8d0d4c3976aa722d0dad0b8773e6fe923d4d4d6110a",
+    "SignalEngine.kt": "4509d997890278630906b6b1100ed03093fb85afa5bb311b439a0292547cdfc8",
+    "TechnicalEngine.kt": "b2288d237dbe68f56c6c752577f64e83bbf6366478b296fd78db68a7bd72d86c"
+  }
+}

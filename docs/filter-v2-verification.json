@@ -1,0 +1,9 @@
+{
+  "audit": "PASS",
+  "candidates": 210,
+  "groups": 30,
+  "selected": 2,
+  "integration": false,
+  "integrity_tests": 11,
+  "validation_only_selection": true
+}

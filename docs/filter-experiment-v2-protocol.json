@@ -1,0 +1,25 @@
+{
+  "version": "2.0",
+  "registered_before_this_run": true,
+  "historical_data_already_observed": true,
+  "scope": "Exploratory filtering of existing non-overlapping EMA and Kotlin research episodes. No new signals or scheduling changes. Not independent confirmation.",
+  "selection_period": "2024-07-01 to 2024-12-31",
+  "review_period": "2025-01-01 to 2026-09-30",
+  "filters": [
+    "trend200",
+    "adx20",
+    "adx25",
+    "volume120",
+    "trend200_adx20",
+    "trend200_adx20_volume120",
+    "normal_volatility"
+  ],
+  "volatility_bounds": "2023-only ATR percentage percentiles 10 and 90",
+  "minimum_validation_resolved": 50,
+  "minimum_validation_precision_gain": 0.05,
+  "minimum_validation_coverage": 0.1,
+  "validation_cost_bps": 40,
+  "selection": "Eligible only if mean net at 40bps positive and precision >= base+5pp, coverage>=10%, resolved>=50. Select greatest mean net at 40bps; name breaks ties. Otherwise abstain.",
+  "report": "All candidates and discarded cases, Wilson95, month block bootstrap paired gross-minus40bps accepted vs rejected-zero scenarios. Descriptive intervals do not adjust multiple selection.",
+  "integration": false
+}

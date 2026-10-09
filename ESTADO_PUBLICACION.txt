@@ -1,0 +1,4 @@
+Programación preparada: domingos 03:17 UTC.
+Pendiente crear y subir el repositorio GitHub; todavía no hay ejecución remota activa.
+13 pruebas Python y 140 selecciones de interfaz verificadas.
+No modifica la app original. No ajusta automáticamente modelos ni integra resultados.

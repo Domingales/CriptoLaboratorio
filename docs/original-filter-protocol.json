@@ -1,0 +1,14 @@
+{
+  "scope": "Additional exploratory historical test of a filter on the frozen Kotlin research engine; not independent prospective evidence",
+  "primary_signal": "Previously accepted original Kotlin signal, threshold 81",
+  "prediction": "Net positive outcome on the same side; no new direction and no forced acceptance",
+  "training": "2023 matured labels only",
+  "calibration": "January-June 2024 matured labels only",
+  "threshold": 0.60,
+  "features": "Past OHLCV-derived features plus original side, confidence, ADX, RSI, volume ratio, MTF score and comparable case count",
+  "barriers": "Same barriers and ATR as the original research comparison",
+  "estimator": "Same fixed XGBoost settings as the main registered protocol",
+  "minimum_train_and_calibration": 100,
+  "cost_bps": 20,
+  "integration": "disabled"
+}
