@@ -1,0 +1,65 @@
+name: Experimento reproducible
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/experiment.yml'
+      - 'research/**'
+      - 'native/**'
+      - 'tests/**'
+      - 'requirements.txt'
+permissions:
+  contents: read
+concurrency:
+  group: cripto-laboratorio-experiment
+  cancel-in-progress: false
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - uses: actions/cache@v4
+        with:
+          path: data/archives
+          key: official-candles-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: official-candles-${{ runner.os }}-
+      - name: Fijar corte de datos y registrar esta ejecución
+        run: python -m research.scheduled_run prepare
+      - name: Descargar y verificar velas hasta el último mes completo
+        run: python -m research.scheduled_run download
+      - run: python -m research.experiment
+      - run: python -m research.native_reference
+      - run: java -cp 'private/jvm/*' com.domingales.criptoanalisis.multi.evaluation.NativeAuditKt
+      - run: python -m research.package_results
+      - run: python -m research.verify_results
+      - name: Exigir las 15 combinaciones completas
+        run: python -m research.scheduled_run verify
+      - run: python -m research.filter_experiment
+      - run: node tests/ui-smoke.cjs
+      - name: Resumen de la ejecución
+        if: always()
+        run: python -m research.scheduled_run summary
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cripto-laboratorio-resultados-${{ github.run_id }}
+          path: |
+            results/
+            docs/
+            dist/
+            data/*manifest.json
+          retention-days: 30
+          if-no-files-found: error
