@@ -25,7 +25,9 @@ def eligible(m, base, protocol):
 
 def paired_months(events, keep):
     # Rejected scenarios earn zero; no capital redeployment assumed.
-    months = pd.date_range('2025-01-01', '2026-09-01', freq='MS').strftime('%Y-%m')
+    last = max((e['time'] for e in events), default=millis('2025-01-01'))
+    last_month = pd.to_datetime(last, unit='ms', utc=True).strftime('%Y-%m-01')
+    months = pd.date_range('2025-01-01', last_month, freq='MS').strftime('%Y-%m')
     delta = {m: 0. for m in months}
     for e, accepted in zip(events, keep):
         if e['gross'] is not None and not accepted:
