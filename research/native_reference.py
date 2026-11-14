@@ -3,7 +3,7 @@
 Adapter source is preserved verbatim, including its documented future-gap fix.
 This validates the mathematical domain, not APK/background services.
 """
-import argparse, concurrent.futures, hashlib, json, os, subprocess
+import argparse, concurrent.futures, hashlib, json, os, subprocess, time, urllib.error
 from pathlib import Path
 import urllib.request
 import numpy as np
@@ -18,10 +18,28 @@ def setup(root):
     deps=root/'private'/'jvm';deps.mkdir(parents=True,exist_ok=True)
     def fetch(item):
         group,artifact,version=item;name=f'{artifact}-{version}.jar';path=deps/name
-        if not path.exists():
-            url=f'https://repo.maven.apache.org/maven2/{group.replace(".","/")}/{artifact}/{version}/{name}'
-            with urllib.request.urlopen(url,timeout=120) as r:path.write_bytes(r.read())
-        return path
+        if path.exists() and path.stat().st_size > 0:
+            return path
+        url=f'https://repo.maven.apache.org/maven2/{group.replace(".","/")}/{artifact}/{version}/{name}'
+        # Network 429/5xx and timeouts are transient; never cache partial JARs.
+        for attempt in range(4):
+            temp=path.with_suffix('.jar.part')
+            try:
+                with urllib.request.urlopen(url,timeout=45) as response, temp.open('wb') as dest:
+                    while True:
+                        chunk=response.read(1024*1024)
+                        if not chunk: break
+                        dest.write(chunk)
+                if temp.stat().st_size == 0: raise IOError('Empty Maven artifact')
+                os.replace(temp,path)
+                return path
+            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
+                temp.unlink(missing_ok=True)
+                retryable=(not isinstance(exc,urllib.error.HTTPError) or
+                           exc.code in (408,429,500,502,503,504))
+                if not retryable or attempt==3: raise
+                time.sleep(2**attempt)
+        raise RuntimeError('Unreachable retry loop')
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:list(pool.map(fetch,ARTIFACTS))
     jars=[x for x in deps.glob('*.jar') if x.name!='reference.jar'];cp=os.pathsep.join(str(x) for x in jars)
     sources=sorted((root/'native').glob('*.kt'));jar=deps/'reference.jar'
