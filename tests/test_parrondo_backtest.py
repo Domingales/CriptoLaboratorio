@@ -27,4 +27,18 @@ class ParrondoBacktestTests(unittest.TestCase):
             second=evaluate_file(path,start+100*step,start+200*step,20)
             self.assertEqual(first,second)
 
+    def test_gap_requires_fresh_warmup_without_fabricated_candles(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);step=3600000;start=timestamp('2024-01-01')
+            a=np.array([[start+i*step,100+i*.01,101+i*.01,99+i*.01,100+i*.01,1,
+                         start+(i+1)*step-1] for i in range(300)],float)
+            # Delete one genuine observation. There must be no trade across it.
+            a=np.delete(a,120,axis=0)
+            path=root/'BTC_1h.npy';np.save(path,a)
+            metrics=evaluate_file(path,start+60*step,start+280*step,20)
+            self.assertEqual(metrics['_integrity']['gaps'],1)
+            self.assertGreater(metrics['_integrity']['excluded_period_candles'],0)
+            self.assertEqual(metrics['A']['n'],metrics['B']['n'])
+            self.assertEqual(metrics['A']['n'],metrics['_integrity']['eligible_episodes'])
+
 if __name__=='__main__':unittest.main()
