@@ -21,8 +21,8 @@ class ParrondoBacktestTests(unittest.TestCase):
             a=np.array([[start+i*step,100+i*.01,101+i*.01,99+i*.01,100+i*.01,1,start+(i+1)*step-1] for i in range(240)],float)
             path=root/'BTC_1h.npy'
             np.save(path,a)
-            first=evaluate_file(path,start+100*step,start+150*step,20)
-            a[200:,1:5]*=1.5
+            first=evaluate_file(path,start+100*step,start+200*step,20)
+            a[220:,1:5]*=1.5
             np.save(path,a)
             second=evaluate_file(path,start+100*step,start+150*step,20)
             self.assertEqual(first,second)
