@@ -20,32 +20,57 @@ def timestamp(s):
     return int(np.datetime64(s,'ms').astype('int64'))
 
 def evaluate_file(path, start, end, cost_bps):
+    if not np.isfinite(cost_bps) or cost_bps < 0:
+        raise ValueError('Invalid transaction costs')
     a=np.load(path,allow_pickle=False)
-    # Include warmup before evaluation; decisions and outcomes must be inside period.
-    # The evaluator's fixed warmup is 50 bars. One extra bar ensures next-bar exit.
-    first=np.searchsorted(a[:,0],start)
-    last=np.searchsorted(a[:,0],end)
+    if a.ndim!=2 or a.shape[1]<5 or len(a)<52:
+        raise ValueError('Invalid candle array')
+    times=a[:,0].astype('int64')
+    if np.any(np.diff(times)<=0):
+        raise ValueError('Nonmonotonic or duplicated timestamps')
+    step=int(times[1]-times[0])
+    if step not in (3600000,14400000,86400000):
+        raise ValueError('Unsupported candle timeframe')
+    first=int(np.searchsorted(times,start))
+    last=int(np.searchsorted(times,end))
     if first<50 or last-first<100:
         raise ValueError('Insufficient history or evaluation candles')
-    # Evaluate entire history up to the end to preserve continuous indicators.
-    bars=[Bar(int(r[0]),float(r[1]),float(r[2]),float(r[3]),float(r[4])) for r in a[:last]]
-    # Discontinuities are not silently skipped; caller marks series not evaluable.
+    # Never fill missing candles. Each gap splits the series into independent
+    # continuous segments. A fresh 50-candle warmup is required after each gap.
+    boundaries=np.r_[0,np.flatnonzero(np.diff(times)!=step)+1,len(a)]
     from research.parrondo import policies
-    decisions=policies(bars)
-    filtered=[d for d in decisions if first<=d['t'] and d['t']+1<last]
-    if not filtered: raise ValueError('No eligible decisions')
+    keys=('A','B','C_aabb','C_state')
+    returns={k:[] for k in keys}
+    skipped_gaps=int(len(boundaries)-2)
+    eligible=0
+    for left,right in zip(boundaries[:-1],boundaries[1:]):
+        if right-left<52 or right<=first or left>=last:
+            continue
+        bars=[Bar(int(r[0]),float(r[1]),float(r[2]),float(r[3]),float(r[4]))
+              for r in a[left:min(right,last)]]
+        if len(bars)<52:
+            continue
+        for decision in policies(bars):
+            global_t=left+decision['t']
+            if not (first<=global_t and global_t+1<last):
+                continue
+            candle=bars[decision['t']+1]
+            eligible+=1
+            for key in keys:
+                returns[key].append(decision[key]*(candle.close/candle.open-1)-cost_bps/10000)
+    if eligible<100:
+        raise ValueError('Insufficient consecutive eligible episodes after gap exclusions')
     out={}
-    for key in ('A','B','C_aabb','C_state'):
-        returns=[]
-        for d in filtered:
-            c=bars[d['t']+1]
-            returns.append(d[key]*(c.close/c.open-1)-cost_bps/10000)
+    for key,values in returns.items():
         wealth=1.;peak=1.;drawdown=0.
-        for r in returns:
+        for r in values:
             wealth*=1+r;peak=max(peak,wealth);drawdown=min(drawdown,wealth/peak-1)
-        out[key]=dict(n=len(returns),mean_net=sum(returns)/len(returns),
+        out[key]=dict(n=len(values),mean_net=sum(values)/len(values),
                       compound=wealth-1,max_drawdown=drawdown,
-                      positive_net_rate=sum(x>0 for x in returns)/len(returns))
+                      positive_net_rate=sum(x>0 for x in values)/len(values))
+    # Metadata does not enter scoring. No synthetic candles or bridging trades.
+    out['_integrity']=dict(gaps=skipped_gaps,eligible_episodes=eligible,
+                           excluded_period_candles=int(last-first-eligible))
     return out
 
 def run(data,output,cost_bps):
@@ -76,6 +101,7 @@ def run(data,output,cost_bps):
                 writer.writerow([row['symbol'],row['timeframe'],row['period'],row['status'],'','','','','','','',row['reason']])
                 continue
             for key,m in row['metrics'].items():
+                if key.startswith('_'): continue
                 writer.writerow([row['symbol'],row['timeframe'],row['period'],'COMPLETE',key,m['n'],m['mean_net'],m['compound'],m['max_drawdown'],m['positive_net_rate'],row['parrondo_candidate'].get(key,'')])
     print(json.dumps({'complete':sum(r['status']=='COMPLETE' for r in rows),
                       'not_evaluable':sum(r['status']!='COMPLETE' for r in rows),
