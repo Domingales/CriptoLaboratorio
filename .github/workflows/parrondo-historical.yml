@@ -6,6 +6,8 @@ on:
       - '.github/workflows/parrondo-historical.yml'
       - 'research/parrondo_backtest.py'
       - 'research/parrondo_data.py'
+      - 'tests/test_parrondo_backtest.py'
+      - 'tests/test_parrondo_data.py'
   workflow_dispatch:
 permissions:
   contents: read
