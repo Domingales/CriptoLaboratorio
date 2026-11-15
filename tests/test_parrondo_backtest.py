@@ -24,7 +24,7 @@ class ParrondoBacktestTests(unittest.TestCase):
             first=evaluate_file(path,start+100*step,start+200*step,20)
             a[220:,1:5]*=1.5
             np.save(path,a)
-            second=evaluate_file(path,start+100*step,start+150*step,20)
+            second=evaluate_file(path,start+100*step,start+200*step,20)
             self.assertEqual(first,second)
 
 if __name__=='__main__':unittest.main()
