@@ -4,6 +4,8 @@ on:
     branches: [research/parrondo-experiment]
     paths:
       - '.github/workflows/parrondo-historical.yml'
+      - 'research/parrondo_backtest.py'
+      - 'research/parrondo_data.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,6 +26,8 @@ jobs:
         with:
           path: data/archives
           key: parrondo-hourly-2022-2026-v1
+      - name: Verify integrity tests before historical run
+        run: python -m unittest discover -s tests -p 'test_parrondo_backtest.py' -v && python -m unittest discover -s tests -p 'test_parrondo_data.py' -v
       - name: Download verified official hourly archives
         run: python -m research.parrondo_data --start 2022-01 --end 2026-09
       - name: Evaluate all 15 combinations without tuning
